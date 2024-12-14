@@ -1,3 +1,5 @@
+//go:generate fyne bundle -o bundled.go assets/go-bear-2.png
+
 package main
 
 import (
@@ -8,11 +10,13 @@ import (
 
 func main() {
 	a := app.New()
-
+	logo := resourceGoBear2Png
+	a.SetIcon(logo)
+	a.Settings().SetTheme(newCustomTheme())
 	w := a.NewWindow("Window")
-
 	w.Resize(fyne.NewSize(800, 800))
-	w.SetContent(makeHeader())
+	w.SetIcon(logo)
 
+	w.SetContent(MakeGui(logo))
 	w.ShowAndRun()
 }
