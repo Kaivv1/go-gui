@@ -13,10 +13,10 @@ func main() {
 	logo := resourceGoBear2Png
 	a.SetIcon(logo)
 	a.Settings().SetTheme(newCustomTheme())
-	w := a.NewWindow("Window")
+	w := a.NewWindow("go-gui")
 	w.Resize(fyne.NewSize(800, 800))
 	w.SetIcon(logo)
 
-	w.SetContent(MakeGui(logo))
+	w.SetContent(MakeGui(logo, a))
 	w.ShowAndRun()
 }

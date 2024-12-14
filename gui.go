@@ -9,9 +9,10 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func makeHeader(logo *fyne.StaticResource) fyne.CanvasObject {
+func makeHeader(logo *fyne.StaticResource, a fyne.App) fyne.CanvasObject {
 	createDbtBtn := widget.NewButtonWithIcon("Create DBT", theme.ContentAddIcon(), func() {
-		execFolderScript()
+		execFolderScript(a)
+
 	})
 	createDbtBtn.IconPlacement = widget.ButtonIconTrailingText
 
@@ -31,8 +32,8 @@ func makeHeader(logo *fyne.StaticResource) fyne.CanvasObject {
 	)
 }
 
-func MakeGui(logo *fyne.StaticResource) fyne.CanvasObject {
-	header := makeHeader(logo)
+func MakeGui(logo *fyne.StaticResource, a fyne.App) fyne.CanvasObject {
+	header := makeHeader(logo, a)
 
 	return container.NewVBox(header)
 }
