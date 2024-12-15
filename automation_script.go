@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -10,7 +11,10 @@ import (
 	"sort"
 	"strings"
 
+	// "fyne.io/fyne/v2/container"
+	// "fyne.io/fyne/v2/widget"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/dialog"
 	excel "github.com/xuri/excelize/v2"
 )
 
@@ -38,23 +42,18 @@ func getDesktopPath() (string, error) {
 	return "", os.ErrNotExist
 }
 
-func execFolderScript(a fyne.App) {
-
+func execFolderScript(w fyne.Window) ([]Row, error) {
 	desktopPath, err := getDesktopPath()
 	if err != nil {
-		log.Println(err)
+		return []Row{}, err
 	}
-
 	currDir, err := os.Getwd()
 	if err != nil {
-		log.Println("Cant get current dir")
-		return
+		return []Row{}, errors.New("Cant get current dir")
 	}
 	filename := "DBT_s_imeili.xlsx"
 	log.Printf("curr: %s", currDir)
-
 	var excelFilePath string
-
 	err = filepath.Walk(currDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -67,13 +66,11 @@ func execFolderScript(a fyne.App) {
 		return nil
 	})
 	if err != nil {
-		log.Printf("Error walking path: %s\n", currDir)
-		return
+		return []Row{}, fmt.Errorf("Error walking path: %s\n", currDir)
 	}
 	excelFile, err := excel.OpenFile(excelFilePath)
 	if err != nil {
-		log.Printf("Error opening %s: %s", filename, err.Error())
-		return
+		return []Row{}, fmt.Errorf("Error opening %s: %s", filename, err.Error())
 	}
 	defer func() {
 		if err := excelFile.Close(); err != nil {
@@ -84,49 +81,35 @@ func execFolderScript(a fyne.App) {
 	neededSheet := sheets[0]
 	rows, err := excelFile.GetRows(neededSheet)
 	if err != nil {
-		log.Printf("Can't get rows on file: %s", filename)
-		return
+		return []Row{}, fmt.Errorf("Can't get rows on file: %s", filename)
 	}
 	DBT_FOLDER := filepath.Join(desktopPath, "ДБТ")
-
 	if _, err = os.Stat(DBT_FOLDER); err == nil {
 		log.Println("Folder exists")
-		log.Fatalln("Script is being canceled")
-		return
+		log.Println("Script is being canceled")
+		return []Row{}, errors.New("Folder already exists")
 	} else if os.IsNotExist(err) {
 		log.Println("Folder does not exist")
 		log.Println("Folder is being created")
 	} else {
-		log.Println("Error searching for folder")
-		log.Fatalln("Script is being canceled")
-		return
+		log.Println("Script is being canceled")
+		return []Row{}, fmt.Errorf("Error searching for folder")
 	}
-
 	err = os.MkdirAll(DBT_FOLDER, 0666)
 	if err != nil {
-		log.Println("Error creating DBT folder")
-		return
+		return []Row{}, fmt.Errorf("Error creating DBT folder")
 	}
 	log.Println("ДБТ folder created")
-
 	emailFilePath := filepath.Join(DBT_FOLDER, "ДБТ-имейли.txt")
-
 	emailsFile, err := os.OpenFile(emailFilePath, os.O_RDWR|os.O_CREATE, 0666)
 	emailsFileName := filepath.Base(emailFilePath)
 	if err != nil {
-		log.Fatalf("Cannot open %s\n", emailsFileName)
+		return []Row{}, fmt.Errorf("Cannot open %s\n", emailsFileName)
 	}
-
-	defer func() {
-		if err := emailsFile.Close(); err != nil {
-			log.Fatalf("Error closing %s\n", emailsFileName)
-		}
-	}()
+	defer emailsFile.Close()
 
 	log.Println("ДБТ-имейли.txt created")
-
 	rowsSlice := []Row{}
-
 	for _, row := range rows {
 		DBT := row[1]
 		email := row[2]
@@ -136,17 +119,14 @@ func execFolderScript(a fyne.App) {
 		slice1 := strings.Split(email, "-")
 		slice2 := strings.Split(slice1[1], "@")
 		numStr := slice2[0]
-
 		var num int
 		fmt.Sscanf(numStr, "%d", &num)
-
 		rowsSlice = append(rowsSlice, Row{
 			DBT:   DBT,
 			Email: email,
 			Num:   num,
 		})
 	}
-
 	sort.Slice(rowsSlice, func(i, j int) bool {
 		return rowsSlice[i].Num < rowsSlice[j].Num
 	})
@@ -164,6 +144,7 @@ func execFolderScript(a fyne.App) {
 			} else {
 				log.Printf("Folder: %s created", folder)
 			}
+
 		}
 	}
 
@@ -172,5 +153,6 @@ func execFolderScript(a fyne.App) {
 	if err != nil {
 		log.Println("Error creating AZ folder")
 	}
-	a.SendNotification(fyne.NewNotification("Ready", "Your folder is ready"))
+	dialog.ShowInformation("Notification", "Folder is created successfully", w)
+	return rowsSlice, nil
 }
