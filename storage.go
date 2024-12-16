@@ -28,6 +28,9 @@ func NewStorage(path string) (*Storage, error) {
 
 func (s *Storage) DoesStorageExist() error {
 	currDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	storageFullPath := filepath.Join(currDir, s.Path)
 	if _, err = os.Stat(storageFullPath); os.IsNotExist(err) {
 		_, err = os.Create(storageFullPath)
@@ -48,7 +51,7 @@ func (s *Storage) WriteToStorage(args *StorageStructure) error {
 	}
 	err = os.WriteFile(s.Path, dataInBytes, 0666)
 	if err != nil {
-		return errors.New("Cannot write to storage file")
+		return errors.New("cannot write to storage file")
 	}
 	return nil
 }
@@ -56,7 +59,7 @@ func (s *Storage) WriteToStorage(args *StorageStructure) error {
 func (s *Storage) GetFromStorage() (*StorageStructure, error) {
 	dataInBytes, err := os.ReadFile(s.Path)
 	if err != nil {
-		return &StorageStructure{}, errors.New("Cannot read storage file")
+		return &StorageStructure{}, errors.New("cannot read storage file")
 	}
 	storageStructure := &StorageStructure{}
 

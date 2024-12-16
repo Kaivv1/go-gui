@@ -33,6 +33,9 @@ func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func
 	})
 
 	refreshSelector := func() {
+		if len(DBTs) > 0 {
+			return
+		}
 		data, err := storage.GetFromStorage()
 		if err != nil {
 			data = &StorageStructure{}
@@ -50,5 +53,26 @@ func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func
 	input := widget.NewEntry()
 	input.PlaceHolder = "Enter name"
 
-	return container.NewBorder(title, nil, nil, nil, container.NewVBox(container.New(layout.NewGridLayout(2), DBTSelector, input))), refreshSelector
+	dropArea := widget.NewLabel("Drag file here")
+	dropArea.Alignment = fyne.TextAlignCenter
+
+	border := canvas.NewRectangle(color.RGBA{R: 0, G: 122, B: 255, A: 255})
+	border.StrokeWidth = 2.0
+
+	dropContainer := container.NewStack(border, container.NewCenter(dropArea))
+
+	chooseFileButton := widget.NewButton("choose file manually", func() {})
+
+	platformSelector := widget.NewSelect([]string{"Email", "Arhimed", "Hermes", "Regix"}, func(s string) {
+
+	})
+
+	addFileToFolderBtn := widget.NewButton("Add file to folder", func() {
+
+	})
+
+	grid := container.NewVBox(container.New(
+		layout.NewGridLayout(2), DBTSelector, input, chooseFileButton, platformSelector), dropContainer, addFileToFolderBtn)
+
+	return container.NewBorder(title, nil, nil, nil, grid), refreshSelector
 }
