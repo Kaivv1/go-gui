@@ -15,7 +15,7 @@ const (
 )
 
 func main() {
-	a := app.New()
+	a := app.NewWithID("com.example.myapp")
 
 	logo := resourceGoBear2Png
 	a.SetIcon(logo)
