@@ -21,13 +21,23 @@ import (
 // 	File
 // }
 
-func AddBorder(w fyne.CanvasObject, c color.Color) *fyne.Container {
-	border := canvas.NewRectangle(c)
-	border.StrokeWidth = 2
-	border.StrokeColor = c
-	return container.NewBorder(border, nil, nil, nil, w)
-}
+func AddBorder(w fyne.CanvasObject, borderColor color.Color, borderWidth float32) *fyne.Container {
+	topBorder := canvas.NewRectangle(borderColor)
 
+	bottomBorder := canvas.NewRectangle(borderColor)
+
+	leftBorder := canvas.NewRectangle(borderColor)
+
+	rightBorder := canvas.NewRectangle(borderColor)
+
+	return container.NewBorder(
+		topBorder,
+		bottomBorder,
+		leftBorder,
+		rightBorder,
+		w,
+	)
+}
 func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func()) {
 	title := canvas.NewText("Добави заявки", color.White)
 	title.TextStyle = fyne.TextStyle{Bold: true}
@@ -46,9 +56,7 @@ func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func
 
 	DBTSelector := widget.NewSelect(DBTs, func(s string) {
 	})
-	DBTSelector.PlaceHolder = "Избери ДБТ"
-
-	DBTSelectorContainer := AddBorder(DBTSelector, color.RGBA{R: 255, G: 0, B: 0, A: 0})
+	DBTSelector.Selected = "Избери ДБТ"
 
 	refreshSelector := func() {
 		if len(DBTs) > 1 {
@@ -106,7 +114,7 @@ func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func
 	})
 	actionSelector.PlaceHolder = "Вид заявка"
 	grid := container.NewVBox(container.NewBorder(
-		nil, nil, chooseFileButton, container.NewVBox(actionSelector, resetButton, addFileToFolderBtn), container.NewVBox(DBTSelectorContainer, platformSelector, input)))
+		nil, nil, chooseFileButton, container.NewVBox(actionSelector, resetButton, addFileToFolderBtn), container.NewVBox(DBTSelector, platformSelector, input)))
 
 	return container.NewBorder(title, nil, nil, nil, grid), refreshSelector
 }
