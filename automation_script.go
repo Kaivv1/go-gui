@@ -49,7 +49,7 @@ func execFolderScript(w fyne.Window) ([]Row, error) {
 	}
 	currDir, err := os.Getwd()
 	if err != nil {
-		return []Row{}, errors.New("Cant get current dir")
+		return []Row{}, errors.New("cant get current dir")
 	}
 	filename := "DBT_s_imeili.xlsx"
 	log.Printf("curr: %s", currDir)
@@ -66,11 +66,11 @@ func execFolderScript(w fyne.Window) ([]Row, error) {
 		return nil
 	})
 	if err != nil {
-		return []Row{}, fmt.Errorf("Error walking path: %s\n", currDir)
+		return []Row{}, fmt.Errorf("error walking path: %s", currDir)
 	}
 	excelFile, err := excel.OpenFile(excelFilePath)
 	if err != nil {
-		return []Row{}, fmt.Errorf("Error opening %s: %s", filename, err.Error())
+		return []Row{}, fmt.Errorf("error opening %s: %s", filename, err.Error())
 	}
 	defer func() {
 		if err := excelFile.Close(); err != nil {
@@ -81,30 +81,30 @@ func execFolderScript(w fyne.Window) ([]Row, error) {
 	neededSheet := sheets[0]
 	rows, err := excelFile.GetRows(neededSheet)
 	if err != nil {
-		return []Row{}, fmt.Errorf("Can't get rows on file: %s", filename)
+		return []Row{}, fmt.Errorf("can't get rows on file: %s", filename)
 	}
 	DBT_FOLDER := filepath.Join(desktopPath, "ДБТ")
 	if _, err = os.Stat(DBT_FOLDER); err == nil {
 		log.Println("Folder exists")
 		log.Println("Script is being canceled")
-		return []Row{}, errors.New("Folder already exists")
+		return []Row{}, errors.New("папката вече съществува")
 	} else if os.IsNotExist(err) {
 		log.Println("Folder does not exist")
 		log.Println("Folder is being created")
 	} else {
 		log.Println("Script is being canceled")
-		return []Row{}, fmt.Errorf("Error searching for folder")
+		return []Row{}, fmt.Errorf("проблем с намирането на папката")
 	}
 	err = os.MkdirAll(DBT_FOLDER, 0666)
 	if err != nil {
-		return []Row{}, fmt.Errorf("Error creating DBT folder")
+		return []Row{}, fmt.Errorf("проблем със създаването на папката")
 	}
 	log.Println("ДБТ folder created")
 	emailFilePath := filepath.Join(DBT_FOLDER, "ДБТ-имейли.txt")
 	emailsFile, err := os.OpenFile(emailFilePath, os.O_RDWR|os.O_CREATE, 0666)
 	emailsFileName := filepath.Base(emailFilePath)
 	if err != nil {
-		return []Row{}, fmt.Errorf("Cannot open %s\n", emailsFileName)
+		return []Row{}, fmt.Errorf("cannot open %s", emailsFileName)
 	}
 	defer emailsFile.Close()
 
@@ -142,17 +142,42 @@ func execFolderScript(w fyne.Window) ([]Row, error) {
 			if err = os.Mkdir(cityDBTPath, os.ModePerm); err != nil {
 				log.Printf("Error creating: %s", folder)
 			} else {
+				for _, platform := range PLATFORMS {
+					platformPath := filepath.Join(cityDBTPath, platform)
+					if err = os.Mkdir(platformPath, os.ModePerm); err != nil {
+						log.Printf("Error creating platform %s for %s\n", platform, folder)
+					}
+					for _, request := range REQUEST_TYPES {
+						requestPath := filepath.Join(platformPath, request)
+						if err = os.Mkdir(requestPath, os.ModePerm); err != nil {
+							log.Printf("Error creating request folder %s for %s at %s\n", request, platform, folder)
+						}
+					}
+				}
 				log.Printf("Folder: %s created", folder)
 			}
 
 		}
 	}
 
-	AZ_Folder_Path := filepath.Join(DBT_FOLDER, "AZ")
+	AZ_Folder_Path := filepath.Join(DBT_FOLDER, "АЗ")
 	err = os.Mkdir(AZ_Folder_Path, os.ModePerm)
 	if err != nil {
 		log.Println("Error creating AZ folder")
 	}
-	dialog.ShowInformation("Notification", "Folder is created successfully", w)
+	for _, platform := range PLATFORMS {
+		platformPath := filepath.Join(AZ_Folder_Path, platform)
+		if err = os.Mkdir(platformPath, os.ModePerm); err != nil {
+			log.Printf("Error creating platform %s for %s\n", platform, AZ_Folder_Path)
+		}
+		for _, request := range REQUEST_TYPES {
+			requestPath := filepath.Join(platformPath, request)
+			if err = os.Mkdir(requestPath, os.ModePerm); err != nil {
+				log.Printf("Error creating request folder %s for %s at %s\n", request, platform, AZ_Folder_Path)
+			}
+		}
+	}
+
+	dialog.ShowInformation("Нотификация", "Папката е създадена успешно", w)
 	return rowsSlice, nil
 }

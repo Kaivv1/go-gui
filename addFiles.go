@@ -21,6 +21,13 @@ import (
 // 	File
 // }
 
+func AddBorder(w fyne.CanvasObject, c color.Color) *fyne.Container {
+	border := canvas.NewRectangle(c)
+	border.StrokeWidth = 2
+	border.StrokeColor = c
+	return container.NewBorder(border, nil, nil, nil, w)
+}
+
 func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func()) {
 	title := canvas.NewText("Добави заявки", color.White)
 	title.TextStyle = fyne.TextStyle{Bold: true}
@@ -31,7 +38,7 @@ func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func
 	if err != nil {
 		data = &StorageStructure{}
 	}
-	DBTs := []string{}
+	DBTs := []string{"АЗ"}
 	for _, DBT := range data.DBTs {
 		fullStr := fmt.Sprintf("%d-%s", DBT.Num, DBT.DBT)
 		DBTs = append(DBTs, fullStr)
@@ -39,9 +46,12 @@ func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func
 
 	DBTSelector := widget.NewSelect(DBTs, func(s string) {
 	})
-	DBTSelector.PlaceHolder = "Choose DBT"
+	DBTSelector.PlaceHolder = "Избери ДБТ"
+
+	DBTSelectorContainer := AddBorder(DBTSelector, color.RGBA{R: 255, G: 0, B: 0, A: 0})
+
 	refreshSelector := func() {
-		if len(DBTs) > 0 {
+		if len(DBTs) > 1 {
 			return
 		}
 		data, err := storage.GetFromStorage()
@@ -59,10 +69,10 @@ func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func
 	refreshSelector()
 
 	input := widget.NewEntry()
-	input.PlaceHolder = "Enter name"
+	input.PlaceHolder = "Име"
 
-	chooseFileButton := widget.NewButton("choose file manually", func() {
-		dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
+	chooseFileButton := widget.NewButton("Избери файл", func() {
+		d := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 			if err != nil {
 				dialog.ShowError(err, w)
 				return
@@ -72,28 +82,31 @@ func makeAddFilesSpace(storage *Storage, w fyne.Window) (fyne.CanvasObject, func
 			}
 			defer reader.Close()
 
-			// Get file path or URI
 			filePath := reader.URI().Path()
 			log.Printf("Selected file: %s", filePath)
-		}, w).Show()
+		}, w)
+		d.Resize(fyne.NewSize(950, 800))
+		d.Show()
 	})
 
-	platformSelector := widget.NewSelect([]string{"Email", "Arhimed", "Hermes", "Regix"}, func(s string) {
+	platformSelector := widget.NewSelect(PLATFORMS[:], func(s string) {
 
 	})
-	platformSelector.PlaceHolder = "Choose request type"
-	addFileToFolderBtn := widget.NewButton("Add file to folder", func() {
+
+	platformSelector.PlaceHolder = "Избери платформа"
+	addFileToFolderBtn := widget.NewButton("Добави файла към папката", func() {
 		log.Printf("DBT: %s", DBTSelector.Selected)
 		log.Printf("Request type: %s", platformSelector.Selected)
 		log.Printf("Input: %s", input.Text)
 	})
-	resetButton := widget.NewButton("Reset", func() {})
+	resetButton := widget.NewButton("Ресетни", func() {})
 
-	actionSelector := widget.NewSelect([]string{"Предоставяне", "Променяне", "Прекратяване"}, func(s string) {
+	actionSelector := widget.NewSelect(REQUEST_TYPES[:], func(s string) {
 
 	})
+	actionSelector.PlaceHolder = "Вид заявка"
 	grid := container.NewVBox(container.NewBorder(
-		nil, nil, chooseFileButton, container.NewVBox(actionSelector, addFileToFolderBtn, resetButton), container.NewVBox(DBTSelector, platformSelector, input)))
+		nil, nil, chooseFileButton, container.NewVBox(actionSelector, resetButton, addFileToFolderBtn), container.NewVBox(DBTSelectorContainer, platformSelector, input)))
 
 	return container.NewBorder(title, nil, nil, nil, grid), refreshSelector
 }

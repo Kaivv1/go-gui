@@ -14,6 +14,10 @@ const (
 	BASE_TEXT  = 16
 )
 
+var PLATFORMS = [4]string{"Имейл", "Архимед", "Хермес", "Regix"}
+
+var REQUEST_TYPES = [3]string{"Предоставяне", "Променяне", "Прекратяване"}
+
 func main() {
 	a := app.NewWithID("com.example.myapp")
 

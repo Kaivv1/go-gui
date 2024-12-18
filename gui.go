@@ -13,7 +13,7 @@ import (
 )
 
 func makeHeader(logo *fyne.StaticResource, w fyne.Window, storage *Storage, refresh func()) fyne.CanvasObject {
-	createDbtBtn := widget.NewButtonWithIcon("Generate DBT Folder", theme.ContentAddIcon(), func() {
+	createDbtBtn := widget.NewButtonWithIcon("Генерирай ДБТ Папка", theme.ContentAddIcon(), func() {
 		data, err := execFolderScript(w)
 		if err != nil {
 			dialog.ShowError(err, w)
